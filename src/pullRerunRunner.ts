@@ -1,5 +1,5 @@
 import { context } from '@actions/github'
-import { octokit, octokitUsingPAT } from './octokit'
+import { isPersonalAccessTokenPresent, isAppPrivateLeyPresent, octokit, octokitUsingPAT, octokitUsingAPP } from './octokit'
 
 import * as core from '@actions/core'
 
@@ -66,11 +66,19 @@ async function listWorkflowRunsInBranch(branch: string, workflowId: number): Pro
 
 async function reRunWorkflow(run: number): Promise<any> {
     // Personal Access token with repo scope is required to access this api - https://github.community/t/bug-rerun-workflow-api-not-working/126742
-    await octokitUsingPAT.actions.reRunWorkflow({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        run_id: run
-    })
+    if (isPersonalAccessTokenPresent()) {
+        await octokitUsingPAT.actions.reRunWorkflow({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: run
+        })
+    } else if ( isAppPrivateLeyPresent()) {
+        await octokitUsingAPP.actions.reRunWorkflow({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: run
+        })
+    }
 }
 
 async function checkIfLastWorkFlowFailed(run: number): Promise<boolean> {
